@@ -47,7 +47,7 @@ class Chat(Frame):
         self.QUIT.pack(side=RIGHT)
 
         self.INP.bind('<Return>', self.sendMessageEvent)
-		
+
     def __init__(self, master=None):
         Frame.__init__(self, master)
 
@@ -169,13 +169,14 @@ receiverThread.start()
 chatRoot = Tk(screenName='Chat')
 chatRoot.title("Chat")
 chatRoot.geometry('400x300')
-chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.destroy)
+chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.quit)
 chat = Chat(master=chatRoot)
 chat.mainloop()
 
 connectionAlive = False
 
 s.close()
+chatRoot.destroy()
 
 while threadOn:
     pass
