@@ -7,11 +7,14 @@ from threading import Thread
 from tkinter import messagebox
 
 class Chat(Frame):
-    def exit(self):
+    def leave(self):
         global connectionAlive, s
         connectionAlive = False
         s.send(b'C=leave')
         self.quit()
+    def exit(self):
+        global goBack
+        self.leave()
         goBack = False
     def addMessage(self, text):
         self.messages.config(state=NORMAL)
