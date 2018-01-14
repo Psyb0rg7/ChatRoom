@@ -61,7 +61,7 @@ class Client:
 				self.connectionAlive = False
 				self.socket.close()
 				clients.remove(self)
-				sendToAll(clients, 'M=%s left the chat.' % self.name)'''
+				sendToAll(clients, 'M=%s left the chat.' % self.name)
 def sendMsgAll(clients, message):
 	sendToAll(clients, 'M=' + message)
 def sendToAll(clients, message):

@@ -5,6 +5,48 @@ from tkinter import *
 from tkinter.scrolledtext import *
 from threading import Thread
 
+timeFormat = '{:%Y-%m-%d %H:%M:%S}'
+class ConnectWindow(Frame):
+	def connect(self):
+		global s, connectionAlive, chat, tk
+		s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
+		s.settimeout(3)
+		host = self.ipText.get()
+		port = int(self.portText.get())
+		
+		try:
+			s.connect((host, port))
+		except:
+			print("Could not connect to server.")
+		
+		connectionAlive = True
+		s.send(bytes(self.name.get().encode('utf-8')))
+		tk.quit()
+		chat.tkraise()
+	def createWidgets(self):
+		self.ipText = StringVar()
+		self.ipInput = Entry(self, textvariable = self.ipText)
+		self.ipText.set('173.66.160.91')
+		self.ipInput.pack()
+		
+		self.portText = StringVar()
+		self.portInput = Entry(self, textvariable = self.portText)
+		self.portText.set('25565')
+		self.portInput.pack()
+		
+		self.name = StringVar()
+		self.nameInput = Entry(self, textvariable = self.name)
+		self.nameInput.pack()
+		
+		self.connectButton = Button(self)
+		self.connectButton['text'] = 'Connect'
+		self.connectButton['fg'] = 'green'
+		self.connectButton['command'] = self.connect
+		self.connectButton.pack()
+	def __init__(self, master=None):
+		Frame.__init__(self, master)
+		master.title("Connect to chatroom")
+		
 class Chat(Frame):
 	def addMessage(self, text):
 		self.messages.config(state=NORMAL)
@@ -48,31 +90,9 @@ class Chat(Frame):
 		
 	def __init__(self, master=None):
 		Frame.__init__(self, master)
-		
-		self.pack()
-		self.createWidgets()
-
-name = 'bob'#input("Name:")
-host = '173.66.160.91'#input("Host [default 184.191.64.88]:")
-port = int(input("Port [default 25565]:") or 25565)
-
-s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
-
-s.settimeout(3)
-try:
-	s.connect((host, port))
-except:
-	print("Could not connect to server.")
-	
-connectionAlive = True
-
-s.send(bytes(name.encode('utf-8'))) # send name
-
-timeFormat = '{:%Y-%m-%d %H:%M:%S}'
-
+		master.title("Chat")
 def receive():
 	global s, connectionAlive, chat
-	print(connectionAlive)
 	while connectionAlive:
 		try:
 			new = s.recv(1024).decode('utf-8') # received message
@@ -92,13 +112,21 @@ def receive():
 			except: pass
 	print("Connection closed")
 
+tk = Tk(screenName='Chat')
+tk.geometry('400x400')
+connect = ConnectWindow(master=tk)
+chat = Chat(master=tk)
+connect.tkraise()
+connect.pack()
+connect.createWidgets()
+connect.mainloop()
+
 receiverThread = Thread(target=receive)
 receiverThread.daemon = True
 receiverThread.start()
 
-tk = Tk(screenName='Chat')
-tk.geometry('400x400')
-chat = Chat(master=tk)
+chat.pack()
+chat.createWidgets()
 chat.mainloop()
 try:
 	tk.destroy()
