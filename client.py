@@ -7,7 +7,6 @@ from threading import Thread
 from tkinter import messagebox
 
 class Chat(Frame):
-
     def exit(self):
         global connectionAlive
         connectionAlive = False
@@ -66,7 +65,7 @@ class Connect(Frame):
                 messagebox.showinfo("ERROR", "Enter all fields!")
             elif self.port.get() != '' and not self.port.get().isnumeric():
                 messagebox.showinfo("ERROR", "Port must be a nubmer or empty!")
-            elif not all(i.isnumeric() or i == "." for i in self.ip.get()):
+            elif not all(i.isnumeric() or i == "." for i in self.ip.get()) or self.ip.get().count(".") != 3:
                 messagebox.showinfo("ERROR", "Invalid IP!")
             else:
                 s.connect((self.ip.get(), int(self.port.get() or 25565)))
@@ -111,7 +110,7 @@ class Connect(Frame):
         self.portLabel.pack()
 
         self.CONNECT = Button(self.ButtonFrame, text="CONNECT", fg="blue", command=self.connect)
-        self.QUIT = Button(self.ButtonFrame, text="QUIT", fg="red", command=self.destroy)
+        self.QUIT = Button(self.ButtonFrame, text="QUIT", fg="red", command=self.quit)
 
         self.CONNECT.pack(side=LEFT)
         self.QUIT.pack(side=RIGHT)
