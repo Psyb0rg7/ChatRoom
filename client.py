@@ -6,9 +6,17 @@ from tkinter.scrolledtext import *
 from threading import Thread
 
 timeFormat = '{:%Y-%m-%d %H:%M:%S}'
+alreadyConnected = False
 class ConnectWindow(Frame):
 	def connect(self):
-		global s, connectionAlive, chat, tk
+		global s, connectionAlive, chat, tk, receiverThread, alreadyConnected
+		if alreadyConnected:
+			disconnect()
+			connectionAlive = True
+			receiverThread = Thread(target = receive)
+			receiverThread.daemon = True
+			receiverThread.start()
+			chat.addMessage('-------------------\n')
 		s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 		s.settimeout(3)
 		host = self.ipText.get()
@@ -21,8 +29,10 @@ class ConnectWindow(Frame):
 		
 		connectionAlive = True
 		s.send(bytes(self.name.get().encode('utf-8')))
-		tk.quit()
-		chat.tkraise()
+		if not alreadyConnected:
+			tk.quit()
+			chat.tkraise()
+		alreadyConnected = True
 	def createWidgets(self):
 		self.ipText = StringVar()
 		self.ipInput = Entry(self, textvariable = self.ipText)
@@ -91,6 +101,12 @@ class Chat(Frame):
 	def __init__(self, master=None):
 		Frame.__init__(self, master)
 		master.title("Chat")
+def disconnect():
+	global connectionAlive, s
+	connectionAlive = False
+	time.sleep(3)
+	s.send(b'C=leave')
+	receiverThread.join()
 def receive():
 	global s, connectionAlive, chat
 	while connectionAlive:
@@ -104,6 +120,7 @@ def receive():
 				s.close()
 			elif new[:2] == 'M=':
 				chat.addMessage(new[2:] + "\n")
+			
 		except:
 			connectionAlive = False
 			s.close()

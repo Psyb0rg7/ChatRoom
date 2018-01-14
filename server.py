@@ -9,7 +9,12 @@ clients = []
 threads = []
 
 timeFormat = '{:%Y-%m-%d %H:%M:%S}'
-
+def remove(client, *m):
+	global clients
+	client.connectionAlive = False
+	client.socket.close()
+	clients.remove(client)
+	sendToAll(clients, 'M=%s left the chat.' % client.name)
 def spam(client, *message):
 	global clients
 	for x in range(10):
@@ -19,7 +24,7 @@ def birthday(client, *message):
 	sendMsgAll(clients, '%s: Happy birthday to you,\n%s: Happy birthday to you,\n%s: Happy birthday dear %s,\n%s: Happy birthday to you!' %(client.name, client.name, client.name, ' '.join(message), client.name))
 def ctime(client, *a):
 	client.socket.send(bytes(('M=[server] : '+timeFormat.format(datetime.datetime.now())).encode('utf-8')))
-commandMap = {'spam':spam, 'birthday':birthday, 'time':ctime}
+commandMap = {'spam':spam, 'birthday':birthday, 'time':ctime, 'leave':remove}
 class Client:
 	def __init__(self, socket, addr):
 		global threads, clients
@@ -65,6 +70,7 @@ class Client:
 def sendMsgAll(clients, message):
 	sendToAll(clients, 'M=' + message)
 def sendToAll(clients, message):
+
 	for client in clients:
 		client.socket.send(bytes(message.encode('utf-8')))
 s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
