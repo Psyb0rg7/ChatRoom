@@ -9,7 +9,6 @@ clients = []
 threads = []
 
 timeFormat = '{:%Y-%m-%d %H:%M:%S}'
-<<<<<<< HEAD
 
 
 def remove(client, *m):
@@ -94,7 +93,6 @@ def sendToAll(clients, message):
         client.socket.send(bytes(message.encode('utf-8')))
 
 
-=======
 def remove(client, *m):
 	global clients
 	client.connectionAlive = False
@@ -159,7 +157,6 @@ def sendToAll(clients, message):
 
 	for client in clients:
 		client.socket.send(bytes(message.encode('utf-8')))
->>>>>>> legocuber
 s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 host = socket.gethostname()
 port = int(input("Port[default 25565]:") or 25565)
@@ -169,17 +166,15 @@ s.bind((host, port))
 s.listen(5)
 
 while True:
-<<<<<<< HEAD
     c, addr = s.accept()
     print("Got connection from", addr)
     c.settimeout(3)
     clients.append(Client(c, addr))
-=======
-	c,addr = s.accept()
-	print("Got connection from",addr)
-	c.settimeout(3)
-	clients.append(Client(c,addr))
->>>>>>> legocuber
+    c,addr = s.accept()
+    print("Got connection from",addr)
+    c.settimeout(3)
+    clients.append(Client(c,addr))
+
 sendToAll(clients, "?=QUIT")
 print("Everyone left, closing server...")
 s.close()
