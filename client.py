@@ -8,10 +8,11 @@ from tkinter import messagebox
 
 class Chat(Frame):
     def exit(self):
-        global connectionAlive
+        global connectionAlive, s
         connectionAlive = False
+        s.send(b'C=leave')
         self.quit()
-
+        goBack = False
     def addMessage(self, text):
         self.messages.config(state=NORMAL)
         self.messages.insert(END, text)
@@ -27,6 +28,8 @@ class Chat(Frame):
         if len(text) > 0:
             if text[0] == "/":
                 s.send(b'C=' + bytes(text[1:].encode('utf-8')))
+                if text == '/leave':
+                    self.exit()
             else:
                 s.send(b'M=' + bytes(text.encode('utf-8')))
         self.entryText.set('')
@@ -140,44 +143,53 @@ def receive():
             s.close()
     print("Connection closed.")
     threadOn = False
+connectRoot = connect = chatRoot = chat = None
+def connectWindow():
+    global connectRoot, connect
+    connectRoot = Tk(screenName="Connect")
+    connectRoot.title("Connect")
+    connect = Connect(master = connectRoot)
+    connect.mainloop()
+def chatWindow():
+    global chatRoot, chat
+    chatRoot = Tk(screenName='Chat')
+    chatRoot.title("Chat")
+    chatRoot.geometry('400x300')
+    chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.quit)
+    chat = Chat(master=chatRoot)
+    chat.mainloop()
+goBack = True
+while goBack:
+    s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 
-s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
+    s.settimeout(3)
+    cont = False
 
-s.settimeout(3)
 
-cont = False
-connectRoot = Tk(screenName="Connect")
-connectRoot.title("Connect")
-connect = Connect(master = connectRoot)
-connect.mainloop()
+    connectWindow()
+    if not cont:
+        print("Application stopped.")
+        exit()
 
-if not cont:
-    print("Application stopped.")
-    exit()
+    connectRoot.destroy()
 
-connectRoot.destroy()
+    connectionAlive = True
 
-connectionAlive = True
+    timeFormat = '{:%Y-%m-%d %H:%M:%S}'
 
-timeFormat = '{:%Y-%m-%d %H:%M:%S}'
+    threadOn = True
+    receiverThread = Thread(target=receive)
+    receiverThread.daemon = True
+    receiverThread.start()
 
-threadOn = True
-receiverThread = Thread(target=receive)
-receiverThread.daemon = True
-receiverThread.start()
+    chatWindow()
 
-chatRoot = Tk(screenName='Chat')
-chatRoot.title("Chat")
-chatRoot.geometry('400x300')
-chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.quit)
-chat = Chat(master=chatRoot)
-chat.mainloop()
+    connectionAlive = False
 
-connectionAlive = False
+    s.close()
+    chatRoot.destroy()
 
-s.close()
-chatRoot.destroy()
-
-while threadOn: # <--- REALLY BAD UNELEGANT CODE (AKA RAVIOLI CODE) ~~~ LEGOCUBER 1/14/2018
-    pass
+    while threadOn: # <--- REALLY BAD UNELEGANT CODE (AKA RAVIOLI CODE) ~~~ LEGOCUBER 1/14/2018
+        pass
+    receiverThread.join()
 input("Press Enter to close.")
