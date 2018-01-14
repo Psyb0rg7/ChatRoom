@@ -7,12 +7,17 @@ from threading import Thread
 from tkinter import messagebox
 
 class Chat(Frame):
-    def exit(self):
+    def leave(self):
         global connectionAlive, s
         connectionAlive = False
         s.send(b'C=leave')
         self.quit()
+
+    def exit(self):
+        global goBack
+        self.leave()
         goBack = False
+
     def addMessage(self, text):
         self.messages.config(state=NORMAL)
         self.messages.insert(END, text)
@@ -29,7 +34,7 @@ class Chat(Frame):
             if text[0] == "/":
                 s.send(b'C=' + bytes(text[1:].encode('utf-8')))
                 if text == '/leave':
-                    self.exit()
+                    self.leave()
             else:
                 s.send(b'M=' + bytes(text.encode('utf-8')))
         self.entryText.set('')
@@ -42,7 +47,7 @@ class Chat(Frame):
         self.INP = Entry(self, textvariable = self.entryText)
 
         self.SEND = Button(self, text="SEND", fg="green", command=self.sendMessage)
-        self.QUIT = Button(self, text="QUIT", fg="red", command=self.exit)
+        self.QUIT = Button(self, text="QUIT", fg="red", command=self.leave)
 
         self.messages.pack(side=RIGHT)
         self.INP.pack()
@@ -53,6 +58,8 @@ class Chat(Frame):
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
+
+        master.protocol("WM_DELETE_WINDOW", self.exit)
 
         self.pack()
         self.createWidgets()
@@ -142,7 +149,7 @@ def receive():
             connectionAlive = False
             s.close()
     print("Connection closed.")
-    threadOn = False
+
 connectRoot = connect = chatRoot = chat = None
 def connectWindow():
     global connectRoot, connect
@@ -150,21 +157,21 @@ def connectWindow():
     connectRoot.title("Connect")
     connect = Connect(master = connectRoot)
     connect.mainloop()
+
 def chatWindow():
     global chatRoot, chat
     chatRoot = Tk(screenName='Chat')
     chatRoot.title("Chat")
     chatRoot.geometry('400x300')
-    chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.quit)
     chat = Chat(master=chatRoot)
     chat.mainloop()
+
 goBack = True
 while goBack:
     s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 
     s.settimeout(3)
     cont = False
-
 
     connectWindow()
     if not cont:
@@ -177,7 +184,6 @@ while goBack:
 
     timeFormat = '{:%Y-%m-%d %H:%M:%S}'
 
-    threadOn = True
     receiverThread = Thread(target=receive)
     receiverThread.daemon = True
     receiverThread.start()
@@ -189,7 +195,5 @@ while goBack:
     s.close()
     chatRoot.destroy()
 
-    while threadOn: # <--- REALLY BAD UNELEGANT CODE (AKA RAVIOLI CODE) ~~~ LEGOCUBER 1/14/2018
-        pass
     receiverThread.join()
 input("Press Enter to close.")
