@@ -37,26 +37,26 @@ class Client:
 		self.socket.send(b'?=HB')
 		global clients, commandMap
 		while self.connectionAlive:
-			#try:
-			new = self.socket.recv(1024).decode('utf-8')
-			if new == '?=HB':
-				time.sleep(0.2)
-				self.socket.send(b'?=HB')
-			elif new[:2] == 'M=':
-				print(addr,self.name,':',new[2:])
-				sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
-			elif new[:2] == 'C=':
-				command = new[2:]
-				print(addr,self.name,':',command)
-				csplit = command.split(' ')
-				function = csplit[0]
-				if function not in commandMap:
-					self.socket.send(b'M=[server] : That command does not exist')
-				elif len(csplit) > 1:
-					commandMap[function](self, *csplit[1:])
-				else:
-					commandMap[function](self)
-			'''except:
+			try:
+				new = self.socket.recv(1024).decode('utf-8')
+				if new == '?=HB':
+					time.sleep(0.2)
+					self.socket.send(b'?=HB')
+				elif new[:2] == 'M=':
+					print(addr,self.name,':',new[2:])
+					sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
+				elif new[:2] == 'C=':
+					command = new[2:]
+					print(addr,self.name,':',command)
+					csplit = command.split(' ')
+					function = csplit[0]
+					if function not in commandMap:
+						self.socket.send(b'M=[server] : That command does not exist')
+					elif len(csplit) > 1:
+						commandMap[function](self, *csplit[1:])
+					else:
+						commandMap[function](self)
+			except:
 				print("Connection closed:", self.addr)
 				self.connectionAlive = False
 				self.socket.close()
