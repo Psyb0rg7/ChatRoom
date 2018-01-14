@@ -178,6 +178,6 @@ connectionAlive = False
 s.close()
 chatRoot.destroy()
 
-while threadOn:
+while threadOn: # <--- REALLY BAD UNELEGANT CODE (AKA RAVIOLI CODE) ~~~ LEGOCUBER 1/14/2018
     pass
 input("Press Enter to close.")
