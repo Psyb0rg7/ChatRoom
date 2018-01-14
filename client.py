@@ -122,26 +122,6 @@ class Connect(Frame):
         self.pack()
         self.createWidgets()
 
-s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
-
-s.settimeout(3)
-
-cont = False
-connectRoot = Tk(screenName="Connect")
-connectRoot.title("Connect")
-connect = Connect(master = connectRoot)
-connect.mainloop()
-
-if not cont:
-    print("Application stopped.")
-    exit()
-
-connectRoot.destroy()
-
-connectionAlive = True
-
-timeFormat = '{:%Y-%m-%d %H:%M:%S}'
-
 def receive():
     global s, connectionAlive, chat, threadOn
     print(connectionAlive)
@@ -161,6 +141,26 @@ def receive():
             s.close()
     print("Connection closed.")
     threadOn = False
+
+s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
+
+s.settimeout(3)
+
+cont = False
+connectRoot = Tk(screenName="Connect")
+connectRoot.title("Connect")
+connect = Connect(master = connectRoot)
+connect.mainloop()
+
+if not cont:
+    print("Application stopped.")
+    exit()
+
+connectRoot.destroy()
+
+connectionAlive = True
+
+timeFormat = '{:%Y-%m-%d %H:%M:%S}'
 
 threadOn = True
 receiverThread = Thread(target=receive)
