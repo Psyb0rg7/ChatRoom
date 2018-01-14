@@ -4,15 +4,24 @@ import ssl
 from tkinter import *
 from tkinter.scrolledtext import *
 from threading import Thread
+from tkinter import messagebox
 
 class Chat(Frame):
+
+    def exit(self):
+        global connectionAlive
+        connectionAlive = False
+        self.quit()
+
     def addMessage(self, text):
         self.messages.config(state=NORMAL)
         self.messages.insert(END, text)
         self.messages.config(state=DISABLED)
         self.messages.see('end')
+
     def sendMessageEvent(self, event):
         self.sendMessage()
+
     def sendMessage(self):
         global s
         text = self.entryText.get()
@@ -22,71 +31,119 @@ class Chat(Frame):
             else:
                 s.send(b'M=' + bytes(text.encode('utf-8')))
         self.entryText.set('')
+
     def createWidgets(self):
         self.messages = ScrolledText(self, height=15, width=30)
         self.messages.config(state=DISABLED)
-        self.messages.pack({'side':'right'})
 
         self.entryText = StringVar()
         self.INP = Entry(self, textvariable = self.entryText)
+
+        self.SEND = Button(self, text="SEND", fg="green", command=self.sendMessage)
+        self.QUIT = Button(self, text="QUIT", fg="red", command=self.exit)
+
+        self.messages.pack(side=RIGHT)
         self.INP.pack()
+        self.SEND.pack(side=LEFT)
+        self.QUIT.pack(side=RIGHT)
+
         self.INP.bind('<Return>', self.sendMessageEvent)
-		
-        self.SEND = Button(self)
-        self.SEND['text'] = 'SEND'
-        self.SEND['fg'] = 'green'
-        self.SEND['command'] = self.sendMessage
-        self.SEND.pack({'side':'left'})
-		
-        self.QUIT = Button(self)
-        self.QUIT['text'] = 'QUIT'
-        self.QUIT['fg'] = 'red'
-        self.QUIT['command'] = self.quit
-        self.QUIT.pack({'side':'right'})
 		
     def __init__(self, master=None):
         Frame.__init__(self, master)
-		
+
         self.pack()
         self.createWidgets()
 
 class Connect(Frame):
+    def connectEvent(self, event):
+        self.connect()
+
+    def connect(self):
+        global s, cont
+        try:
+            if self.ip.get() == '' or self.name.get() == '':
+                messagebox.showinfo("ERROR", "Enter all fields!")
+            elif self.port.get() != '' and not self.port.get().isnumeric():
+                messagebox.showinfo("ERROR", "Port must be a nubmer or empty!")
+            elif not all(i.isnumeric() or i == "." for i in self.ip.get()):
+                messagebox.showinfo("ERROR", "Invalid IP!")
+            else:
+                s.connect((self.ip.get(), int(self.port.get() or 25565)))
+                s.send(bytes(self.name.get().encode("utf-8")))
+                cont = True
+                self.quit()
+        except:
+            messagebox.showinfo("Failed to connect", "Could not connect to server.")
+
     def createWidgets(self):
-        self.IPFrame = Frame(self)
-        self.IPFrame.pack()
-
-        self.PortFrame = Frame(self)
-        self.PortFrame.pack()
-
+        self.InputFrame = Frame(self)
+        self.LabelFrame = Frame(self.InputFrame)
+        self.EntryFrame = Frame(self.InputFrame)
         self.ButtonFrame = Frame(self)
-        self.ButtonFrame.pack()
 
-        self.ipLabel = Label(self.IPFrame)
-        self.ipLabel['text'] = "IP: "
+        self.InputFrame.pack(side=TOP)
+        self.LabelFrame.pack(side=LEFT)
+        self.EntryFrame.pack(side=RIGHT)
+        self.ButtonFrame.pack(side=BOTTOM)
 
+        self.name = StringVar()
+        self.NAMEINP = Entry(self.EntryFrame, textvariable=self.name)
         self.ip = StringVar()
-        self.ipEntry = Entry(self.IPFrame, var = self.ip)
+        self.IPINP = Entry(self.EntryFrame, textvariable=self.ip)
+        self.port = StringVar()
+        self.PORTINP = Entry(self.EntryFrame, textvariable=self.port)
 
-name = input("Name: ")
-host = input("Host: ")
-port = int(input("Port (default 25565): ") or 25565)
+        self.NAMEINP.pack()
+        self.IPINP.pack()
+        self.PORTINP.pack()
+
+        self.NAMEINP.bind("<Return>", self.connectEvent)
+        self.IPINP.bind("<Return>", self.connectEvent)
+        self.PORTINP.bind("<Return>", self.connectEvent)
+
+        self.userLabel = Label(self.LabelFrame, text="Username: ")
+        self.ipLabel = Label(self.LabelFrame, text="IP: ")
+        self.portLabel = Label(self.LabelFrame, text="Port (Default 25565): ")
+
+        self.userLabel.pack()
+        self.ipLabel.pack()
+        self.portLabel.pack()
+
+        self.CONNECT = Button(self.ButtonFrame, text="CONNECT", fg="blue", command=self.connect)
+        self.QUIT = Button(self.ButtonFrame, text="QUIT", fg="red", command=self.destroy)
+
+        self.CONNECT.pack(side=LEFT)
+        self.QUIT.pack(side=RIGHT)
+
+    def __init__(self, master = None):
+        Frame.__init__(self, master)
+
+        self.pack()
+        self.createWidgets()
 
 s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 
 s.settimeout(3)
-try:
-    s.connect((host, port))
-except:
-    print("Could not connect to server.")
-	
-connectionAlive = True
 
-s.send(bytes(name.encode('utf-8'))) # send name
+cont = False
+connectRoot = Tk(screenName="Connect")
+connectRoot.title("Connect")
+connect = Connect(master = connectRoot)
+connect.mainloop()
+
+if not cont:
+    print("Application stopped.")
+    exit()
+
+connectRoot.destroy()
+
+connectionAlive = True
 
 timeFormat = '{:%Y-%m-%d %H:%M:%S}'
 
 def receive():
-    global s, connectionAlive, chat, tk
+    global s, connectionAlive, chat, threadOn
     print(connectionAlive)
     while connectionAlive:
         try:
@@ -102,21 +159,25 @@ def receive():
         except:
             connectionAlive = False
             s.close()
-    tk.destroy()
-    print("Connection closed")
+    print("Connection closed.")
+    threadOn = False
 
+threadOn = True
 receiverThread = Thread(target=receive)
 receiverThread.daemon = True
 receiverThread.start()
 
-tk = Tk(screenName='Chat')
-tk.geometry('400x300')
-chat = Chat(master=tk)
+chatRoot = Tk(screenName='Chat')
+chatRoot.title("Chat")
+chatRoot.geometry('400x300')
+chatRoot.protocol("WM_DELETE_WINDOW", chatRoot.destroy)
+chat = Chat(master=chatRoot)
 chat.mainloop()
-try:
-    tk.destroy()
-except: pass
+
 connectionAlive = False
 
 s.close()
-input("Press enter to close.")
+
+while threadOn:
+    pass
+input("Press Enter to close.")
