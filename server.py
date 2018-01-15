@@ -221,7 +221,7 @@ class Client:
                     sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
                 elif new[:2] == 'C=':
                     command = new[2:]
-                    print(addr,self.name,':',command)
+                    print(self.addr,self.name,':',command)
                     csplit = command.split(' ')
                     function = csplit[0]
                     if function not in commandMap:
@@ -254,6 +254,7 @@ def selectClients():
             if select.select([serverSocket],[],[]):
                 c, addr = serverSocket.accept()
                 print("Got connection from", addr)
+                clients.append(Client(c,addr))
         except:
             print('Error while selecting sockets')
             keepListening = False
@@ -263,7 +264,7 @@ host = socket.gethostname()
 print("Your hostname:", host)
 
 portTk = Tk(screenName='Server')
-portTk.geometry('40x50')
+portTk.geometry('1000x1000')
 portTk.title("Server %s" % host)
 
 portGui = PortSelectionGui(master=portTk)
