@@ -13,14 +13,14 @@ class NewServer(Frame):
     def createServer(self):
         if self.name.get() == '' or self.ip.get() == '':
             messagebox.showerror("ERROR", "Please fill out all fields!")
-        elif not all(i == '.' or i.isnumeric() for i in self.ip.get()) or self.ip.get().count(".") != 3:
+        elif (not all(i == '.' or i.isnumeric() for i in self.ip.get()) or self.ip.get().count(".") != 3) and self.ip.get() != "localhost":
             messagebox.showerror("ERROR", "Invalid IP!")
         elif not self.port.get().isnumeric() and not self.port.get() == '':
             messagebox.showerror("ERROR", "Port must be number or empty!")
         else:
             serverFile = open("servers.txt", "a")
             serverFile.write("N=" + self.name.get() + "\n")
-            serverFile.write("IP=" + self.ip.get() + ":" + (self.port.get() or "27755") + "\n")
+            serverFile.write("IP=" + (self.ip.get() if self.ip.get() != "localhost" else socket.gethostbyname(socket.gethostname)) + ":" + (self.port.get() or "27755") + "\n")
             self.quit()
 
     def createWidgets(self):
@@ -169,10 +169,10 @@ class Connect(Frame):
                     messagebox.showerror("ERROR", "Enter all fields!")
                 elif self.port.get() != '' and not self.port.get().isnumeric():
                     messagebox.showerror("ERROR", "Port must be a nubmer or empty!")
-                elif not all(i.isnumeric() or i == "." for i in self.ip.get()) or self.ip.get().count(".") != 3:
+                elif (not all(i.isnumeric() or i == "." for i in self.ip.get()) or self.ip.get().count(".") != 3) and self.ip.get() != "localhost":
                     messagebox.showerror("ERROR", "Invalid IP!")
                 else:
-                    s.connect((self.ip.get(), int(self.port.get() or 27755)))
+                    s.connect(((self.ip.get() if self.ip.get() != "localhost" else socket.gethostbyname(socket.gethostname())), int(self.port.get() or 27755)))
                     s.send(bytes(self.name.get().encode("utf-8")))
                     cont = True
                     self.quit()
