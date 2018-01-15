@@ -19,25 +19,34 @@ class ServerGui(Frame):
         self.master.destroy()
         self.exited = True
     def addMessage(self, msg):
+        self.messages.config(state=NORMAL)
         self.messages.insert(END, msg + '\n')
         self.messages.see(END)
+        self.messages.config(state=DISABLED)
     def sendMessageEvent(self, event):
         self.sendMessage()
     def sendMessage(self):
         global clients
-        sendMsgAll(clients, self.entryText.get())
+        sendMsgAll(clients, '[server] ' + self.entryText.get())
         self.entryText.set('')
     def addWidgets(self):
-        self.messages = ScrolledText(self, height=15, width=30)
-        #self.messages.config(state=DISABLED)
-
+        self.inputFrame = Frame(self)
+        self.messageFrame = Frame(self)
+        
         self.entryText = StringVar()
-        self.INP = Entry(self, textvariable = self.entryText)
-
-        self.SEND = Button(self, text="SEND", fg="green", command=self.sendMessage)
+        self.INP = Entry(self.inputFrame, textvariable = self.entryText)
+        self.INP.config(width=30)
+        
+        self.messages = ScrolledText(self.messageFrame, height=15, width=30)
+        self.messages.config(state=DISABLED)
+        
+        self.SEND = Button(self.inputFrame, text="SEND", fg="green", command=self.sendMessage)
         self.messages.pack(side=RIGHT)
-        self.INP.pack()
+        self.INP.pack(side=RIGHT)
         self.SEND.pack(side=LEFT)
+        
+        self.inputFrame.pack(side=BOTTOM)
+        self.messageFrame.pack(side=TOP)
 
         self.INP.bind('<Return>', self.sendMessageEvent)
     def __init__(self, master=None):
@@ -239,7 +248,7 @@ selectClientsThread.daemon = True
 selectClientsThread.start()
 
 serverTk = Tk(screenName='Server')
-serverTk.geometry('300x400')
+serverTk.geometry('500x400')
 serverTk.title("Server %s:%s" % (host, port))
 
 serverGui = ServerGui(master=serverTk)
