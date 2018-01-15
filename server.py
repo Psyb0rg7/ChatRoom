@@ -69,6 +69,7 @@ class PortSelectionGui(Frame):
         
         self.portText = StringVar()
         self.portInp = Entry(self.EntryFrame, textvariable=self.portText)
+        self.portInp.bind('<Return>', self.usePort)
         
         self.portLabel = Label(self.LabelFrame)
         self.portLabel['text'] = 'Port to run on:'
