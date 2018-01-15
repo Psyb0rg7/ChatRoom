@@ -7,10 +7,7 @@ from threading import Thread
 from tkinter import messagebox
 
 class NewServer(Frame):
-    def createEvent(self, event):
-        self.createServer()
-
-    def createServer(self):
+    def createServer(self, event=None):
         if self.name.get() == '' or self.ip.get() == '':
             messagebox.showerror("ERROR", "Please fill out all fields!")
         elif (not all(i == '.' or i.isnumeric() for i in self.ip.get()) or self.ip.get().count(".") != 3) and self.ip.get() != "localhost":
@@ -50,9 +47,9 @@ class NewServer(Frame):
         self.ip.pack()
         self.port.pack()
 
-        self.name.bind("<Return>", self.createEvent)
-        self.ip.bind("<Return>", self.createEvent)
-        self.port.bind("<Return>", self.createEvent)
+        self.name.bind("<Return>", self.createServer)
+        self.ip.bind("<Return>", self.createServer)
+        self.port.bind("<Return>", self.createServer)
 
         self.CREATE = Button(self.ButtonFrame, text="CREATE", fg="blue", command=self.createServer)
         self.CANCEL = Button(self.ButtonFrame, text="CANCEL", fg="red", command=self.quit)
@@ -86,10 +83,7 @@ class Chat(Frame):
         self.messages.config(state=DISABLED)
         self.messages.see('end')
 
-    def sendMessageEvent(self, event):
-        self.sendMessage()
-
-    def sendMessage(self):
+    def sendMessage(self, event=None):
         global s
         text = self.entryText.get()
         if len(text) > 0:
@@ -109,14 +103,14 @@ class Chat(Frame):
         self.INP = Entry(self, textvariable = self.entryText)
 
         self.SEND = Button(self, text="SEND", fg="green", command=self.sendMessage)
-        self.QUIT = Button(self, text="QUIT", fg="red", command=self.leave)
+        self.QUIT = Button(self, text="DISCONNECT", fg="red", command=self.leave)
 
         self.messages.pack(side=RIGHT)
         self.INP.pack()
         self.SEND.pack(side=LEFT)
         self.QUIT.pack(side=RIGHT)
 
-        self.INP.bind('<Return>', self.sendMessageEvent)
+        self.INP.bind('<Return>', self.sendMessage)
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
@@ -158,10 +152,7 @@ class Connect(Frame):
         if index is not None:
             self.server.set(self.servers[index])
 
-    def connectEvent(self, event):
-        self.connect()
-
-    def connect(self):
+    def connect(self, event=None):
         global s, cont
         if self.server.get() == "Enter Manually":
             try:
@@ -213,9 +204,9 @@ class Connect(Frame):
         self.ip.pack()
         self.port.pack()
 
-        self.name.bind("<Return>", self.connectEvent)
-        self.ip.bind("<Return>", self.connectEvent)
-        self.port.bind("<Return>", self.connectEvent)
+        self.name.bind("<Return>", self.connect)
+        self.ip.bind("<Return>", self.connect)
+        self.port.bind("<Return>", self.connect)
 
         self.userLabel = Label(self.LabelFrame, text="Username: ")
         self.ipLabel = Label(self.LabelFrame, text="IP: ")
@@ -250,7 +241,7 @@ class Connect(Frame):
 
 def receive():
     global s, connectionAlive, chat
-    print(connectionAlive)
+    print("Connection established.")
     while connectionAlive:
         try:
             new = s.recv(1024).decode('utf-8') # received message
