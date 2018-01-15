@@ -190,7 +190,7 @@ class Connect(Frame):
                     cont = True
                     self.quit()
             except:
-                messagebox.showerror("Failed to connect", "Could not connecto to server.")
+                messagebox.showerror("Failed to connect", "Could not connect to to server.")
 
     def createWidgets(self):
         self.InputFrame = Frame(self)
@@ -265,6 +265,7 @@ def receive():
         except:
             connectionAlive = False
             s.close()
+    chat.quit()
     print("Connection closed.")
 
 connectRoot = connect = chatRoot = chat = None
