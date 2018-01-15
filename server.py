@@ -50,7 +50,7 @@ class PortSelectionGui(Frame):
         self.quit()
         self.master.destroy()
         self.exited = closeAll
-    def usePort(self):
+    def usePort(self, event=None):
         global port
         text = self.portText.get()
         if text.isnumeric():
