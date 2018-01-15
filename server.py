@@ -165,7 +165,7 @@ class Client:
         threads.append(self.thread)
         self.thread.daemon = True
         self.thread.start()
-        sendToAll(clients, '%s has joined the server!' % self.name)
+        sendMsgAll(clients, '%s has joined the server!' % self.name)
     def handle(self):
         self.socket.send(b'?=HB')
         global clients, commandMap
@@ -199,7 +199,6 @@ def sendMsgAll(clients, message):
     sendToAll(clients, 'M=' + message)
 
 def sendToAll(clients, message):
-    print("SEND")
     global serverGui
     serverGui.addMessage(message[2:])
     for client in clients:
