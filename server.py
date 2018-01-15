@@ -143,11 +143,11 @@ class Client:
                     time.sleep(0.2)
                     self.socket.send(b'?=HB')
                 elif new[:2] == 'M=':
-                    print(addr, self.name, ':', new[2:])
+                    print(self.addr, self.name, ':', new[2:])
                     sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
                 elif new[:2] == 'C=':
                     command = new[2:]
-                    print(addr, self.name, ':', command)
+                    print(self.addr, self.name, ':', command)
                     csplit = command.split(' ')
                     function = csplit[0]
                     if function not in commandMap:
