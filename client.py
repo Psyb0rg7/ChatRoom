@@ -20,7 +20,7 @@ class NewServer(Frame):
         else:
             serverFile = open("servers.txt", "a")
             serverFile.write("N=" + self.name.get() + "\n")
-            serverFile.write("IP=" + (self.ip.get() if self.ip.get() != "localhost" else socket.gethostbyname(socket.gethostname)) + ":" + (self.port.get() or "27755") + "\n")
+            serverFile.write("IP=" + (self.ip.get() if self.ip.get() != "localhost" else socket.gethostbyname(socket.gethostname())) + ":" + (self.port.get() or "27755") + "\n")
             self.quit()
 
     def createWidgets(self):
