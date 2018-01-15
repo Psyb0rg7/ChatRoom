@@ -248,9 +248,15 @@ class Connect(Frame):
         self.pack()
         self.createWidgets()
 
+def kick():
+    global chat
+    chat.quit()
+    messagebox.showinfo("Kicked", "You were kicked by an administrator")
+
+cmdMap = {"kick":kick}
+
 def receive():
     global s, connectionAlive, chat
-    print(connectionAlive)
     while connectionAlive:
         try:
             new = s.recv(1024).decode('utf-8') # received message
@@ -258,8 +264,11 @@ def receive():
                 time.sleep(0.2)
                 s.send(b'?=HB')
             elif new == '?=QUIT':
-                connectionAlive = False
-                s.close()
+                chat.quit()
+                messagebox.showinfo("Connection Closed", "Connection was forcibly closed by the remote host")
+            elif new[:2] == "C=":
+                func = cmdMap[new[2:]]
+                func()
             elif new[:2] == 'M=':
                 chat.addMessage(new[2:] + "\n")
         except:
