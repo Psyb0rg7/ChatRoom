@@ -159,7 +159,7 @@ def sendToAll(clients, message):
 		client.socket.send(bytes(message.encode('utf-8')))
 s = ssl.wrap_socket(socket.socket(), ciphers='SHA1')
 host = socket.gethostname()
-port = int(input("Port[default 25565]:") or 25565)
+port = int(input("Port[default 25565]:") or 27755)
 print("Your hostname:", host)
 
 s.bind((host, port))
