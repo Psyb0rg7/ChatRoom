@@ -18,6 +18,9 @@ class ServerGui(Frame):
         self.quit()
         self.master.destroy()
         self.exited = True
+    def addMessage(self, msg):
+        self.messages.insert(END, msg + '\n')
+        self.messages.see(END)
     def sendMessageEvent(self, event):
         self.sendMessage()
     def sendMessage(self):
@@ -119,51 +122,6 @@ def ctime(client, *a):
 commandMap = {'spam': spam, 'birthday': birthday, 'time': ctime, 'leave': remove}
 
 
-class Client:
-    def __init__(self, socket, addr):
-        global threads, clients
-
-        self.socket = socket
-        self.addr = addr
-        self.name = socket.recv(1024).decode('utf-8')  # receive a name
-        self.connectionAlive = True
-        self.thread = Thread(target=self.handle)
-        threads.append(self.thread)
-        self.thread.daemon = True
-        self.thread.start()
-        sendToAll(clients, '%s has joined the server!' % self.name)
-
-    def handle(self):
-        self.socket.send(b'?=HB')
-        global clients, commandMap
-        while self.connectionAlive:
-            try:
-                new = self.socket.recv(1024).decode('utf-8')
-                if new == '?=HB':
-                    time.sleep(0.2)
-                    self.socket.send(b'?=HB')
-                elif new[:2] == 'M=':
-                    print(self.addr, self.name, ':', new[2:])
-                    sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
-                elif new[:2] == 'C=':
-                    command = new[2:]
-                    print(self.addr, self.name, ':', command)
-                    csplit = command.split(' ')
-                    function = csplit[0]
-                    if function not in commandMap:
-                        self.socket.send(b'M=[server] : That command does not exist')
-                    elif len(csplit) > 1:
-                        commandMap[function](self, *csplit[1:])
-                    else:
-                        commandMap[function](self)
-            except:
-                print("Connection closed:", self.addr)
-                self.connectionAlive = False
-                self.socket.close()
-                clients.remove(self)
-                sendToAll(clients, 'M=%s left the chat.' % self.name)
-
-
 def sendMsgAll(clients, message):
     sendToAll(clients, 'M=' + message)
 
@@ -217,7 +175,7 @@ class Client:
                     time.sleep(0.2)
                     self.socket.send(b'?=HB')
                 elif new[:2] == 'M=':
-                    print(addr,self.name,':',new[2:])
+                    print(self.addr,self.name,':',new[2:])
                     sendToAll(clients, "M=%s : %s" % (self.name, new[2:]))
                 elif new[:2] == 'C=':
                     command = new[2:]
@@ -242,7 +200,7 @@ def sendMsgAll(clients, message):
 def sendToAll(clients, message):
     print("SEND")
     global serverGui
-    serverGui.messages.insert(END, message[2:]+'\n')
+    serverGui.addMessage(message[2:])
     for client in clients:
         client.socket.send(bytes(message.encode('utf-8')))
 
@@ -264,7 +222,7 @@ host = socket.gethostname()
 print("Your hostname:", host)
 
 portTk = Tk(screenName='Server')
-portTk.geometry('1000x1000')
+portTk.geometry('300x300')
 portTk.title("Server %s" % host)
 
 portGui = PortSelectionGui(master=portTk)

@@ -252,19 +252,19 @@ def receive():
     global s, connectionAlive, chat
     print(connectionAlive)
     while connectionAlive:
-        try:
-            new = s.recv(1024).decode('utf-8') # received message
-            if new == '?=HB': # if heartbeat message:
-                time.sleep(0.2)
-                s.send(b'?=HB')
-            elif new == '?=QUIT':
-                connectionAlive = False
-                s.close()
-            elif new[:2] == 'M=':
-                chat.addMessage(new[2:] + "\n")
-        except:
+        #try:
+        new = s.recv(1024).decode('utf-8') # received message
+        if new == '?=HB': # if heartbeat message:
+            time.sleep(0.2)
+            s.send(b'?=HB')
+        elif new == '?=QUIT':
             connectionAlive = False
             s.close()
+        elif new[:2] == 'M=':
+            chat.addMessage(new[2:] + "\n")
+        #except:
+        #    connectionAlive = False
+        #    s.close()
     chat.quit()
     print("Connection closed.")
 
