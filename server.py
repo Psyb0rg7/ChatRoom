@@ -23,11 +23,23 @@ class ServerGui(Frame):
         self.messages.insert(END, msg + '\n')
         self.messages.see(END)
         self.messages.config(state=DISABLED)
-    def sendMessageEvent(self, event):
-        self.sendMessage()
-    def sendMessage(self):
-        global clients
-        sendMsgAll(clients, '[server] ' + self.entryText.get())
+    def sendMessage(self, event=None):
+        global clients, serverMap
+        text = self.entryText.get()
+        if len(text) == 0:
+            return
+        elif text[0] == '/':
+            command = text[1:]
+            if len(command) == 0:
+                return
+            csplit = command.split(' ')
+            if csplit[0] in serverMap:
+                if len(csplit) > 1:
+                    serverMap[csplit[0]](*csplit[1:])
+                else:
+                    serverMap[csplit[0]]()
+        else:
+            sendMsgAll(clients, '[server] ' + self.entryText.get())
         self.entryText.set('')
     def addWidgets(self):
         self.inputFrame = Frame(self)
@@ -48,7 +60,7 @@ class ServerGui(Frame):
         self.inputFrame.pack(side=BOTTOM)
         self.messageFrame.pack(side=TOP)
 
-        self.INP.bind('<Return>', self.sendMessageEvent)
+        self.INP.bind('<Return>', self.sendMessage)
     def __init__(self, master=None):
         self.master = master
         Frame.__init__(self, master)
@@ -74,7 +86,6 @@ class PortSelectionGui(Frame):
         self.InputFrame = Frame(self)
         self.LabelFrame = Frame(self.InputFrame)
         self.EntryFrame = Frame(self.InputFrame)
-        self.ButtonFrame = Frame(self)
         
         self.portText = StringVar()
         self.portInp = Entry(self.EntryFrame, textvariable=self.portText)
@@ -83,20 +94,17 @@ class PortSelectionGui(Frame):
         self.portLabel = Label(self.LabelFrame)
         self.portLabel['text'] = 'Port to run on:'
         
-        self.portButton = Button(self.ButtonFrame)
+        self.portButton = Button(self.EntryFrame)
         self.portButton['text'] = 'Use Port'
         self.portButton['command'] = self.usePort
         
-        self.portInp.pack()
+        self.portInp.pack(side=LEFT)
         self.portLabel.pack()
-        self.portButton.pack()
+        self.portButton.pack(side=RIGHT)
         
         self.InputFrame.pack(side=TOP)
         self.LabelFrame.pack(side=LEFT)
         self.EntryFrame.pack(side=RIGHT)
-        self.ButtonFrame.pack(side=BOTTOM)
-        
-        self.EntryFrame.pack()
     def __init__(self, master = None):
         self.master = master
         Frame.__init__(self, master)
@@ -104,50 +112,51 @@ class PortSelectionGui(Frame):
         self.pack()
         self.addWidgets()
         self.master.protocol("WM_DELETE_WINDOW", self.exit)
+        
 def remove(client, *m):
     global clients
+    client.socket.send(b'?=QUIT')
     client.connectionAlive = False
-    client.socket.close()
-    clients.remove(client)
-    sendToAll(clients, 'M=%s left the chat.' % client.name)
-
 
 def spam(client, *message):
     global clients
     for x in range(10):
         sendMsgAll(clients, client.name + ' : ' + ' '.join(message))
 
-
+def kick(*msg):
+    global serverGui, clients
+    if len(msg) == 0:
+        serverGui.addMessage('Command "kick": Not enough args')
+    else:
+        for client in clients:
+            if client.name == msg[0]:
+                sendMsgAll(clients, "[server] Kicking user %s..." % client.name)
+                client.connectionAlive = False
+                client.socket.send(b'?=KICK')
+                return
+        serverGui.addMessage('Could not find user %s' % msg[0])
+        
+        
 def birthday(client, *message):
     global clients
-    sendMsgAll(clients,
-               '%s: Happy birthday to you,\n%s: Happy birthday to you,\n%s: Happy birthday dear %s,\n%s: Happy birthday to you!' % (
-               client.name, client.name, client.name, ' '.join(message), client.name))
+    if len(message) > 0:
+        sendMsgAll(clients,
+                   '%s: Happy birthday to you,\n%s: Happy birthday to you,\n%s: Happy birthday dear %s,\n%s: Happy birthday to you!' % (
+                   client.name, client.name, client.name, ' '.join(message), client.name))
 
 
 def ctime(client, *a):
     client.socket.send(bytes(('M=[server] : ' + timeFormat.format(datetime.datetime.now())).encode('utf-8')))
-
-
-commandMap = {'spam': spam, 'birthday': birthday, 'time': ctime, 'leave': remove}
-
 
 def sendMsgAll(clients, message):
     sendToAll(clients, 'M=' + message)
 
 
 def sendToAll(clients, message):
+    serverGui.addMessage(message)
     for client in clients:
         client.socket.send(bytes(message.encode('utf-8')))
 
-
-def remove(client, *m):
-    global clients
-    client.connectionAlive = False
-    client.socket.close()
-    clients.remove(client)
-    sendToAll(clients, 'M=%s left the chat.' % client.name)
-    
 def spam(client, *message):
     global clients
     for x in range(10):
@@ -161,6 +170,7 @@ def ctime(client, *a):
     client.socket.send(bytes(('M=[server] : '+timeFormat.format(datetime.datetime.now())).encode('utf-8')))
     
 commandMap = {'spam':spam, 'birthday':birthday, 'time':ctime, 'leave':remove}
+serverMap = {'kick':kick}
 
 class Client:
     def __init__(self, socket, addr):
@@ -202,16 +212,9 @@ class Client:
                 print("Connection closed:", self.addr)
                 self.connectionAlive = False
                 self.socket.close()
-                clients.remove(self)
+                if self in clients:
+                    clients.remove(self)
                 sendToAll(clients, 'M=%s left the chat.' % self.name)
-def sendMsgAll(clients, message):
-    sendToAll(clients, 'M=' + message)
-
-def sendToAll(clients, message):
-    global serverGui
-    serverGui.addMessage(message[2:])
-    for client in clients:
-        client.socket.send(bytes(message.encode('utf-8')))
 
 def selectClients():
     global clients, keepListening, serverSocket
@@ -231,7 +234,7 @@ host = socket.gethostname()
 print("Your hostname:", host)
 
 portTk = Tk(screenName='Server')
-portTk.geometry('300x300')
+portTk.geometry('300x50')
 portTk.title("Server %s" % host)
 
 portGui = PortSelectionGui(master=portTk)
