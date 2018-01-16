@@ -66,6 +66,9 @@ class NewServer(Frame):
         self.createWidgets()
 
 class Chat(Frame):
+    def showKick(self):
+        messagebox.showinfo("Kicked", "You were kicked by an administrator.")
+
     def leave(self):
         global connectionAlive, s
         connectionAlive = False
@@ -162,6 +165,8 @@ class Connect(Frame):
                     messagebox.showerror("ERROR", "Port must be a nubmer or empty!")
                 elif (not all(i.isnumeric() or i == "." for i in self.ip.get()) or self.ip.get().count(".") != 3) and self.ip.get() != "localhost":
                     messagebox.showerror("ERROR", "Invalid IP!")
+                elif " " in self.name.get():
+                    messagebox.showerror("ERROR", "Username cannot contain spaces!")
                 else:
                     s.connect(((self.ip.get() if self.ip.get() != "localhost" else socket.gethostbyname(socket.gethostname())), int(self.port.get() or 27755)))
                     s.send(bytes(self.name.get().encode("utf-8")))
@@ -251,6 +256,10 @@ def receive():
             elif new == '?=QUIT':
                 connectionAlive = False
                 s.close()
+            elif new == '?=KICK':
+                connectionAlive = False
+                s.close()
+                chat.showKick()
             elif new[:2] == 'M=':
                 chat.addMessage(new[2:] + "\n")
         except:
